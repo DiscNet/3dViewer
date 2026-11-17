@@ -47,24 +47,37 @@ async function initFlutedGlass() {
         w * (0.72 + Math.sin(t * 0.8) * 0.13),
         h * (0.28 + Math.cos(t) * 0.12),
         430,
-        "rgba(255,218,218,0.48)"
+        "rgba(255,218,218,0.72)"
       );
       drawGlow(
         w * (0.38 + Math.cos(t * 0.65) * 0.17),
         h * (0.72 + Math.sin(t * 0.9) * 0.12),
         390,
-        "rgba(184,49,58,0.58)"
+        "rgba(184,49,58,0.82)"
       );
       drawGlow(
         w * (0.86 + Math.sin(t * 0.55) * 0.08),
         h * (0.78 + Math.cos(t * 0.7) * 0.1),
         300,
-        "rgba(255,244,240,0.3)"
+        "rgba(255,244,240,0.52)"
+      );
+
+      drawGlow(
+        w * (0.58 + Math.cos(t * 0.72) * 0.16),
+        h * (0.48 + Math.sin(t * 0.82) * 0.2),
+        245,
+        "rgba(255,112,124,0.42)"
+      );
+      drawGlow(
+        w * (0.94 + Math.sin(t * 0.48) * 0.04),
+        h * (0.42 + Math.cos(t * 0.62) * 0.16),
+        210,
+        "rgba(255,230,226,0.48)"
       );
 
       ctx.save();
       ctx.globalCompositeOperation = "screen";
-      ctx.filter = "blur(58px)";
+      ctx.filter = "blur(42px)";
 
       for (let i = 0; i < 4; i++) {
         const phase = t + i * 1.7;
@@ -75,9 +88,9 @@ async function initFlutedGlass() {
 
         const fluid = ctx.createRadialGradient(x, y, 0, x, y, radiusX);
         fluid.addColorStop(0, i % 2
-          ? "rgba(210,75,86,0.46)"
-          : "rgba(255,224,222,0.38)");
-        fluid.addColorStop(0.5, "rgba(140,21,27,0.22)");
+          ? "rgba(224,72,88,0.68)"
+          : "rgba(255,224,222,0.62)");
+        fluid.addColorStop(0.5, "rgba(140,21,27,0.34)");
         fluid.addColorStop(1, "rgba(58,8,19,0)");
         ctx.fillStyle = fluid;
         ctx.beginPath();
@@ -93,13 +106,25 @@ async function initFlutedGlass() {
       ctx.fillStyle = silhouette;
       ctx.fillRect(0, 0, w, h);
 
-      const specular = ctx.createLinearGradient(w * 0.55, 0, w, 0);
+      const specular = ctx.createLinearGradient(w * 0.48, 0, w, 0);
       specular.addColorStop(0, "rgba(255,255,255,0)");
-      specular.addColorStop(0.62, "rgba(255,238,236,0.08)");
-      specular.addColorStop(0.86, "rgba(255,248,246,0.28)");
-      specular.addColorStop(1, "rgba(255,255,255,0.08)");
+      specular.addColorStop(0.48, "rgba(255,220,220,0.1)");
+      specular.addColorStop(0.72, "rgba(255,238,236,0.22)");
+      specular.addColorStop(0.88, "rgba(255,250,248,0.48)");
+      specular.addColorStop(1, "rgba(255,255,255,0.16)");
       ctx.fillStyle = specular;
       ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.filter = "blur(24px)";
+      const rimGlow = ctx.createRadialGradient(w * 0.82, h * 0.5, 8, w * 0.82, h * 0.5, 250);
+      rimGlow.addColorStop(0, "rgba(255,238,236,0.42)");
+      rimGlow.addColorStop(0.38, "rgba(184,49,58,0.24)");
+      rimGlow.addColorStop(1, "rgba(184,49,58,0)");
+      ctx.fillStyle = rimGlow;
+      ctx.fillRect(0, 0, w, h);
+      ctx.restore();
     };
 
     const createFrameImage = (time, onLoad) => {
@@ -117,7 +142,7 @@ async function initFlutedGlass() {
           u_colorBack: getShaderColorFromString("#00000000"),
           u_colorShadow: getShaderColorFromString("#16070b"),
           u_colorHighlight: getShaderColorFromString("#fffaf8"),
-          u_shadows: 0.48,
+          u_shadows: 0.38,
           u_size: 0.72,
           u_angle: 0,
           u_distortion: 0.78,
@@ -126,7 +151,7 @@ async function initFlutedGlass() {
           u_edges: 0.38,
           u_stretch: 0.08,
           u_distortionShape: 1,
-          u_highlights: 0.52,
+          u_highlights: 0.7,
           u_shape: 1,
           u_marginLeft: 0,
           u_marginRight: 0,
