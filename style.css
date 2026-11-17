@@ -19,3 +19,5 @@
 .editor-export:hover:not(:disabled){background:#b9a4ff;color:#17131f}
 .editor-button:disabled{opacity:.4;cursor:not-allowed}
 .editor-note{margin:10px 0 0;color:#777583;font-size:9px;line-height:1.5}
+
+.button-secondary{background:#24212e;color:#cfc7e4;border:1px solid #393347;text-decoration:none}.button-secondary:hover{background:#302b3d;border-color:#6d5a9e;color:#fff}
