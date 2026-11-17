@@ -82,6 +82,7 @@ function initFlutedGlass() {
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
       throw new Error("Falha ao vincular shader de vidro.");
     }
+    canvas.parentElement.classList.add("webgl-ready");
 
     const vertices = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, vertices);
