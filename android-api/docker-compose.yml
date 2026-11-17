@@ -1,0 +1,24 @@
+services:
+  emulator:
+    image: us-docker.pkg.dev/android-emulator-268719/images/30-google-x64:30.1.2
+    devices:
+      - /dev/kvm:/dev/kvm
+    ports:
+      - "8554:8554"
+      - "5555:5555"
+    environment:
+      ADBKEY: ${ADBKEY}
+    restart: unless-stopped
+
+  apk-api:
+    build: .
+    environment:
+      ANDROID_API_TOKEN: ${ANDROID_API_TOKEN:?Set ANDROID_API_TOKEN}
+      ADB_HOST: emulator
+      ADB_PORT: "5555"
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:?Set ALLOWED_ORIGINS}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - emulator
+    restart: unless-stopped
