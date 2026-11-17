@@ -294,6 +294,7 @@ $("frameButton").addEventListener("click", () => {
 $("orbitButton").addEventListener("click", () => {
   controls.enableRotate = true;
   controls.enablePan = true;
+  controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
   $("orbitButton").classList.add("active");
   $("panButton").classList.remove("active");
   $("cameraMode").textContent = "ORBIT CONTROLS";
@@ -301,6 +302,7 @@ $("orbitButton").addEventListener("click", () => {
 $("panButton").addEventListener("click", () => {
   controls.enableRotate = false;
   controls.enablePan = true;
+  controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
   $("panButton").classList.add("active");
   $("orbitButton").classList.remove("active");
   $("cameraMode").textContent = "PAN CONTROLS";
