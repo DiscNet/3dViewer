@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101014">
+  <meta name="description" content="Execute e controle aplicativos Android em um emulador remoto.">
+  <title>Android Lab — DiscNet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./android.css">
+</head>
+<body>
+  <div class="android-app">
+    <header class="android-header">
+      <a class="brand" href="./"><span class="brand-mark"><i></i><i></i><i></i></span>3D <span>VIEWER</span></a>
+      <nav><a href="./">Visualizador 3D</a><span> / </span><strong>Android Lab</strong></nav>
+      <span class="header-status" id="connectionStatus">DESCONECTADO</span>
+    </header>
+    <main class="android-layout">
+      <aside class="android-sidebar">
+        <div class="section-title">AMBIENTE ANDROID <small>01</small></div>
+        <label class="field-label" for="gatewayUrl">Gateway WebRTC</label>
+        <input id="gatewayUrl" class="text-field" type="url" placeholder="https://android-gateway.example.com">
+        <label class="field-label" for="apiUrl">API de instalação</label>
+        <input id="apiUrl" class="text-field" type="url" placeholder="https://android-api.example.com">
+        <label class="field-label" for="accessToken">Token de acesso</label>
+        <input id="accessToken" class="text-field" type="password" autocomplete="off" placeholder="Token do servidor">
+        <button class="primary-button" id="connectButton">Conectar emulador</button>
+        <div class="divider"></div>
+        <div class="section-title">INSTALAR APLICATIVO <small>02</small></div>
+        <label class="upload-box" for="apkInput">
+          <span class="upload-icon">↑</span>
+          <strong id="apkName">Selecionar arquivo APK</strong>
+          <small>Arquivo Android .apk · até 300 MB</small>
+        </label>
+        <input id="apkInput" type="file" accept=".apk,application/vnd.android.package-archive" hidden>
+        <button class="secondary-button" id="installButton" disabled>Instalar no emulador</button>
+        <p class="help-text">O emulador precisa estar conectado e inicializado antes da instalação.</p>
+        <div class="divider"></div>
+        <div class="section-title">CONTROLES <small>03</small></div>
+        <div class="device-controls">
+          <button data-key="GoHome" disabled>Home</button>
+          <button data-key="GoBack" disabled>Voltar</button>
+          <button data-key="AppSwitch" disabled>Recentes</button>
+          <button data-key="Power" disabled>Power</button>
+        </div>
+        <p class="help-text">Clique na tela do dispositivo para tocar. Arraste para gestos e use o teclado para digitar.</p>
+      </aside>
+      <section class="device-area">
+        <div class="device-toolbar">
+          <div><span class="live-indicator" id="liveIndicator"></span><strong>DISPOSITIVO REMOTO</strong><small id="deviceMessage">Configure os endpoints para começar.</small></div>
+          <button class="icon-button" id="disconnectButton" disabled>Desconectar</button>
+        </div>
+        <div class="device-stage">
+          <div class="device-frame">
+            <div id="emulatorRoot" class="emulator-root">
+              <div class="device-placeholder">
+                <div class="phone-outline"><div></div><span>ANDROID</span></div>
+                <h1>Seu Android, no navegador.</h1>
+                <p>Conecte um emulador remoto para instalar e executar APKs.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="device-footer"><span>WEBRTC STREAM</span><span>SESSÃO REMOTA · HTTPS</span></footer>
+      </section>
+    </main>
+    <div class="toast" id="toast" role="status"></div>
+  </div>
+  <script type="module" src="./android.js"></script>
+</body>
+</html>
