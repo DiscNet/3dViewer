@@ -1478,3 +1478,82 @@ body {
 .hero-visuals.paper-glass-error {
   background: var(--pmenta-dark) !important;
 }
+
+
+/* Remove neo-brutalist treatment; retain glassmorphism and fluted-glass visuals. */
+.converter-card {
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 22px;
+  box-shadow:
+    0 24px 70px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.24),
+    inset 0 -1px 0 rgba(255,255,255,.06);
+}
+
+.swap-button,
+.refresh-button {
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 12px;
+  box-shadow: 0 8px 22px rgba(20,3,8,.2);
+  transform: none;
+  transition: background .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+
+.swap-button:hover,
+.refresh-button:hover {
+  border-color: rgba(255,255,255,.32);
+  box-shadow: 0 10px 28px rgba(20,3,8,.28);
+  transform: translateY(-1px);
+}
+
+.swap-button:active,
+.refresh-button:active {
+  box-shadow: 0 4px 12px rgba(20,3,8,.2);
+  transform: translateY(0);
+}
+
+.quick-section {
+  border-top: 1px solid rgba(58,8,19,.12);
+  border-bottom: 1px solid rgba(58,8,19,.12);
+}
+
+.quick-value {
+  border: 1px solid rgba(58,8,19,.14);
+  border-radius: 12px;
+  box-shadow: 0 5px 16px rgba(58,8,19,.07);
+  transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+.quick-value:hover {
+  border-color: rgba(140,21,27,.3);
+  box-shadow: 0 9px 22px rgba(58,8,19,.12);
+  transform: translateY(-2px);
+}
+
+.quick-value:active {
+  box-shadow: 0 3px 10px rgba(58,8,19,.08);
+  transform: translateY(0);
+}
+
+.info-item {
+  border-top: 1px solid rgba(58,8,19,.14);
+}
+
+.info-number {
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 10px;
+  box-shadow: 0 5px 14px rgba(58,8,19,.12);
+}
+
+.site-footer {
+  border-top: 1px solid rgba(58,8,19,.12);
+}
+
+@media (max-width: 720px) {
+  .converter-card {
+    border-radius: 18px;
+    box-shadow:
+      0 20px 48px rgba(0,0,0,.34),
+      inset 0 1px 0 rgba(255,255,255,.2);
+  }
+}
