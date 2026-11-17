@@ -1403,3 +1403,23 @@ body {
     top: 26%;
   }
 }
+
+
+/* WebGL fluted glass refraction */
+.hero-visuals {
+  background: none !important;
+}
+.hero-visuals::before,
+.hero-visuals::after,
+.hero-visuals .gradient-shape,
+.hero-visuals .glass-cube {
+  display: none !important;
+}
+.fluted-glass-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
