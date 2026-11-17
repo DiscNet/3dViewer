@@ -1303,3 +1303,11 @@ body {
     box-shadow: 6px 6px 0 rgba(0,0,0,.88), 0 20px 48px rgba(0,0,0,.36);
   }
 }
+
+
+/* Keep currency markers inside the selected palette */
+.flag-us, .flag-br {
+  color: #fff;
+  background: var(--pmenta-maroon);
+  border: 2px solid rgba(255,255,255,.28);
+}
