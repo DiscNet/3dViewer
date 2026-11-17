@@ -1,422 +1,124 @@
-import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import { MTLLoader } from "three/addons/loaders/MTLLoader.js";
-import { OBJExporter } from "three/addons/exporters/OBJExporter.js";
+const API_BASE = "https://api.frankfurter.dev/v2";
+const amountInput = document.querySelector("#amount");
+const resultOutput = document.querySelector("#result");
+const rateText = document.querySelector("#rateText");
+const rateDate = document.querySelector("#rateDate");
+const rateStatus = document.querySelector("#rateStatus");
+const refreshButton = document.querySelector("#refreshButton");
+const swapButton = document.querySelector("#swapButton");
 
-const $ = (id) => document.getElementById(id);
-const host = $("canvasHost");
-const fileInput = $("fileInput");
-const emptyState = $("emptyState");
-const toastElement = $("toast");
+const currencies = {
+  USD: { name: "Dólar americano", flag: "US" },
+  BRL: { name: "Real brasileiro", flag: "BR" }
+};
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color("#14131a");
+let baseCurrency = "USD";
+let quoteCurrency = "BRL";
+let currentRate = null;
+let currentRateDate = null;
 
-const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 10000);
-camera.position.set(4, 3, 5);
+function parseAmount(value) {
+  const normalized = value.trim().replace(/\s/g, "");
+  if (!normalized) return 0;
 
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.15;
-host.prepend(renderer.domElement);
+  const parsed = normalized.includes(",")
+    ? Number(normalized.replace(/\./g, "").replace(",", "."))
+    : Number(normalized);
 
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.06;
-controls.minDistance = 0.05;
-controls.maxDistance = 10000;
-
-const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
-const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-directionalLight.position.set(5, 8, 6);
-const fillLight = new THREE.DirectionalLight(0x9b83f2, 0.55);
-fillLight.position.set(-5, 2, -4);
-scene.add(ambientLight, directionalLight, fillLight);
-
-const grid = new THREE.GridHelper(20, 20, 0x51466c, 0x302c3b);
-grid.position.y = -0.01;
-scene.add(grid);
-
-const axes = new THREE.AxesHelper(2);
-axes.visible = false;
-scene.add(axes);
-
-const modelGroup = new THREE.Group();
-scene.add(modelGroup);
-
-let currentModel = null;
-let currentColor = "#a78bfa";
-let toastTimer;
-let objectUrl = null;
-let renderMode = "solid";
-
-function showToast(message) {
-  toastElement.textContent = message;
-  toastElement.classList.add("visible");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastElement.classList.remove("visible"), 3000);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
-function formatNumber(value) {
-  return new Intl.NumberFormat("pt-BR").format(value);
+function formatCurrency(value, currency) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2
+  }).format(value);
 }
 
-function resizeRenderer() {
-  const width = host.clientWidth;
-  const height = host.clientHeight;
-  if (!width || !height) return;
-  renderer.setSize(width, height, false);
-  camera.aspect = width / height;
-  camera.updateProjectionMatrix();
-}
+function updateResult() {
+  const amount = parseAmount(amountInput.value);
 
-const resizeObserver = new ResizeObserver(resizeRenderer);
-resizeObserver.observe(host);
-resizeRenderer();
-
-function frameModel(object) {
-  const box = new THREE.Box3().setFromObject(object);
-  if (box.isEmpty()) return;
-  const center = box.getCenter(new THREE.Vector3());
-  const size = box.getSize(new THREE.Vector3());
-  const maxDimension = Math.max(size.x, size.y, size.z, 0.001);
-  const distance = maxDimension / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))) * 1.65;
-
-  controls.target.copy(center);
-  camera.position.set(
-    center.x + distance * 0.9,
-    center.y + distance * 0.65,
-    center.z + distance * 0.9
-  );
-  camera.near = Math.max(maxDimension / 10000, 0.001);
-  camera.far = Math.max(maxDimension * 100, 100);
-  camera.updateProjectionMatrix();
-  controls.minDistance = maxDimension * 0.015;
-  controls.maxDistance = maxDimension * 100;
-  controls.update();
-}
-
-function updateStats(object) {
-  let vertices = 0;
-  let faces = 0;
-  let meshes = 0;
-  object.traverse((child) => {
-    if (!child.isMesh || !child.geometry) return;
-    meshes++;
-    const geometry = child.geometry;
-    const position = geometry.getAttribute("position");
-    if (position) vertices += position.count;
-    const index = geometry.getIndex();
-    faces += index ? index.count / 3 : (position ? position.count / 3 : 0);
-  });
-
-  const box = new THREE.Box3().setFromObject(object);
-  const size = box.getSize(new THREE.Vector3());
-  $("vertexCount").textContent = formatNumber(vertices);
-  $("faceCount").textContent = formatNumber(Math.floor(faces));
-  $("meshCount").textContent = formatNumber(meshes);
-  $("dimensions").textContent = box.isEmpty() ? "—" : [size.x, size.y, size.z].map((n) => n.toFixed(2)).join(" × ");
-}
-
-function applyRenderMode() {
-  if (!currentModel) return;
-  currentModel.traverse((child) => {
-    if (!child.isMesh) return;
-    const materials = Array.isArray(child.material) ? child.material : [child.material];
-    for (const material of materials) {
-      if (!material) continue;
-      material.wireframe = renderMode !== "solid";
-      material.transparent = renderMode === "solid-wire";
-      material.opacity = renderMode === "solid-wire" ? 0.82 : 1;
-      material.polygonOffset = renderMode === "solid-wire";
-      material.polygonOffsetFactor = renderMode === "solid-wire" ? 1 : 0;
-      material.polygonOffsetUnits = renderMode === "solid-wire" ? 1 : 0;
-      material.needsUpdate = true;
-    }
-  });
-}
-
-function applyModelColor(color) {
-  currentColor = color;
-  if (!currentModel) return;
-  currentModel.traverse((child) => {
-    if (!child.isMesh) return;
-    const materials = Array.isArray(child.material) ? child.material : [child.material];
-    for (const material of materials) {
-      if (material?.userData?.hasImportedMaterial) continue;
-      if (material?.color) material.color.set(color);
-    }
-  });
-}
-
-function disposeModel() {
-  if (!currentModel) return;
-  modelGroup.remove(currentModel);
-  currentModel.traverse((child) => {
-    if (!child.isMesh) return;
-    child.geometry?.dispose();
-    const materials = Array.isArray(child.material) ? child.material : [child.material];
-    for (const material of materials) {
-      if (!material) continue;
-      for (const value of Object.values(material)) {
-        if (value && value.isTexture) value.dispose();
-      }
-      material.dispose();
-    }
-  });
-  currentModel = null;
-}
-
-
-function setEditorEnabled(enabled) {
-  document.querySelectorAll("[data-transform]").forEach((input) => { input.disabled = !enabled; });
-  $("resetTransform").disabled = !enabled;
-  $("exportButton").disabled = !enabled;
-}
-
-function syncTransformInputs() {
-  if (!currentModel) return;
-  document.querySelectorAll("[data-transform]").forEach((input) => {
-    const { transform, axis } = input.dataset;
-    const value = transform === "rotation"
-      ? THREE.MathUtils.radToDeg(currentModel.rotation[axis])
-      : currentModel[transform][axis];
-    input.value = Number(value.toFixed(3));
-  });
-}
-
-function applyTransformInput(input) {
-  if (!currentModel) return;
-  const { transform, axis } = input.dataset;
-  const value = Number(input.value);
-  if (!Number.isFinite(value)) return;
-  if (transform === "scale" && value <= 0) {
-    input.value = currentModel.scale[axis];
-    return;
-  }
-  currentModel[transform][axis] = transform === "rotation"
-    ? THREE.MathUtils.degToRad(value)
-    : value;
-}
-
-function resetTransform() {
-  if (!currentModel) return;
-  currentModel.position.set(0, 0, 0);
-  currentModel.rotation.set(0, 0, 0);
-  currentModel.scale.set(1, 1, 1);
-  syncTransformInputs();
-  frameModel(currentModel);
-}
-
-function exportModel() {
-  if (!currentModel) return;
-  try {
-    const output = new OBJExporter().parse(currentModel);
-    const blob = new Blob([output], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${$("fileName").textContent.replace(/\.obj$/i, "") || "modelo"}-editado.obj`;
-    link.click();
-    URL.revokeObjectURL(url);
-    showToast("Modelo exportado em OBJ.");
-  } catch (error) {
-    console.error(error);
-    showToast("Não foi possível exportar o modelo.");
-  }
-}
-
-document.querySelectorAll("[data-transform]").forEach((input) => {
-  input.addEventListener("input", () => applyTransformInput(input));
-});
-$("resetTransform").addEventListener("click", resetTransform);
-$("exportButton").addEventListener("click", exportModel);
-
-function getFileMap(files) {
-  const map = new Map();
-  for (const file of files) {
-    map.set(file.name.toLowerCase(), file);
-    map.set(file.name.split(/[\\/]/).pop().toLowerCase(), file);
-  }
-  return map;
-}
-
-async function loadModel(files) {
-  const fileList = Array.from(files);
-  const objFile = fileList.find((file) => file.name.toLowerCase().endsWith(".obj"));
-  if (!objFile) {
-    showToast("Selecione um arquivo .obj para continuar.");
+  if (amount === null) {
+    resultOutput.textContent = "Valor inválido";
     return;
   }
 
-  const mtlFile = fileList.find((file) => file.name.toLowerCase().endsWith(".mtl"));
-  const fileMap = getFileMap(fileList);
-  const manager = new THREE.LoadingManager();
-  manager.setURLModifier((url) => {
-    const decoded = decodeURIComponent(url).replace(/\\/g, "/");
-    const fileName = decoded.split("/").pop().toLowerCase();
-    const file = fileMap.get(fileName) || fileMap.get(decoded.toLowerCase());
-    if (file) return URL.createObjectURL(file);
-    return url;
-  });
+  if (currentRate === null) {
+    resultOutput.textContent = "—";
+    return;
+  }
 
-  const readText = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(new Error("Não foi possível ler o arquivo."));
-    reader.readAsText(file);
-  });
+  resultOutput.textContent = formatCurrency(amount * currentRate, quoteCurrency);
+}
+
+function updateCurrencyLabels() {
+  document.querySelector("#baseCode").textContent = baseCurrency;
+  document.querySelector("#quoteCode").textContent = quoteCurrency;
+  document.querySelector("#quoteName").textContent = currencies[quoteCurrency].name;
+  document.querySelector("#quoteFlag").textContent = currencies[quoteCurrency].flag;
+  document.querySelector("#amount").setAttribute("aria-label", `Valor em ${currencies[baseCurrency].name}`);
+}
+
+function setStatus(message, state = "") {
+  rateStatus.className = `rate-status ${state}`;
+  rateStatus.lastChild.textContent = message;
+}
+
+async function loadRate() {
+  refreshButton.disabled = true;
+  refreshButton.classList.add("loading");
+  setStatus("Consultando fonte de referência");
 
   try {
-    showToast("Carregando modelo...");
-    const loader = new OBJLoader(manager);
-    if (mtlFile) {
-      const materialLoader = new MTLLoader(manager);
-      const materials = materialLoader.parse(await readText(mtlFile), "");
-      materials.preload();
-      loader.setMaterials(materials);
-    }
-
-    const object = loader.parse(await readText(objFile));
-    let meshTotal = 0;
-    object.traverse((child) => {
-      if (!child.isMesh) return;
-      meshTotal++;
-      child.geometry.computeVertexNormals();
-      const mats = Array.isArray(child.material) ? child.material : [child.material];
-      for (const material of mats) {
-        if (!material) continue;
-        material.side = THREE.DoubleSide;
-        material.userData.hasImportedMaterial = Boolean(mtlFile);
-        if (!mtlFile && material.color) material.color.set(currentColor);
-      }
+    const response = await fetch(`${API_BASE}/rate/${baseCurrency.toLowerCase()}/${quoteCurrency.toLowerCase()}`, {
+      headers: { Accept: "application/json" },
+      cache: "no-store"
     });
 
-    if (!meshTotal) throw new Error("O arquivo OBJ não contém malhas válidas.");
+    if (!response.ok) throw new Error("A cotação não está disponível no momento.");
 
-    disposeModel();
-    currentModel = object;
-    modelGroup.add(object);
-    applyRenderMode();
-    frameModel(object);
-    updateStats(object);
+    const data = await response.json();
+    if (!Number.isFinite(data.rate) || data.rate <= 0) {
+      throw new Error("A fonte retornou uma cotação inválida.");
+    }
 
-    $("fileName").textContent = objFile.name;
-    $("fileMeta").textContent = mtlFile ? "OBJ + MTL carregados" : "Arquivo OBJ carregado";
-    $("statusText").textContent = objFile.name;
-    $("statusText").previousElementSibling.classList.add("ready");
-    emptyState.hidden = true;
-    setEditorEnabled(true);
-    syncTransformInputs();
-    showToast("Modelo carregado com sucesso.");
+    currentRate = data.rate;
+    currentRateDate = data.date;
+    rateText.textContent = `1 ${baseCurrency} = ${formatCurrency(currentRate, quoteCurrency)}`;
+    rateDate.textContent = `Referência: ${new Intl.DateTimeFormat("pt-BR").format(new Date(`${currentRateDate}T12:00:00`))}`;
+    setStatus("Cotação carregada com sucesso", "success");
+    updateResult();
   } catch (error) {
-    console.error(error);
-    showToast(error.message || "Erro ao carregar o modelo.");
+    currentRate = null;
+    currentRateDate = null;
+    rateText.textContent = "Não foi possível obter a cotação";
+    rateDate.textContent = "";
+    resultOutput.textContent = "Indisponível";
+    setStatus(error.message || "Erro ao consultar a cotação", "error");
+  } finally {
+    refreshButton.disabled = false;
+    refreshButton.classList.remove("loading");
   }
 }
 
-function openFilePicker() {
-  fileInput.value = "";
-  fileInput.click();
-}
+amountInput.addEventListener("input", updateResult);
+refreshButton.addEventListener("click", loadRate);
 
-$("openButton").addEventListener("click", openFilePicker);
-$("replaceButton").addEventListener("click", openFilePicker);
-$("emptyOpenButton").addEventListener("click", openFilePicker);
-fileInput.addEventListener("change", (event) => {
-  if (event.target.files.length) loadModel(event.target.files);
+swapButton.addEventListener("click", () => {
+  [baseCurrency, quoteCurrency] = [quoteCurrency, baseCurrency];
+  updateCurrencyLabels();
+  loadRate();
 });
 
-$("renderMode").addEventListener("change", (event) => {
-  renderMode = event.target.value;
-  applyRenderMode();
-});
-$("modelColor").addEventListener("input", (event) => {
-  $("colorValue").textContent = event.target.value.toUpperCase();
-  applyModelColor(event.target.value);
-});
-$("resetColor").addEventListener("click", () => {
-  $("modelColor").value = "#a78bfa";
-  $("colorValue").textContent = "#A78BFA";
-  applyModelColor("#a78bfa");
-});
-$("gridToggle").addEventListener("change", (event) => { grid.visible = event.target.checked; });
-$("axesToggle").addEventListener("change", (event) => { axes.visible = event.target.checked; });
-$("autoRotate").addEventListener("change", (event) => { controls.autoRotate = event.target.checked; });
-$("lightIntensity").addEventListener("input", (event) => {
-  ambientLight.intensity = Number(event.target.value);
-  $("lightValue").textContent = Number(event.target.value).toFixed(1);
-});
-$("directionalIntensity").addEventListener("input", (event) => {
-  directionalLight.intensity = Number(event.target.value);
-  $("directionalValue").textContent = Number(event.target.value).toFixed(1);
+document.querySelectorAll(".quick-value").forEach((button) => {
+  button.addEventListener("click", () => {
+    amountInput.value = button.dataset.amount;
+    updateResult();
+    amountInput.focus();
+  });
 });
 
-$("frameButton").addEventListener("click", () => {
-  if (currentModel) frameModel(currentModel);
-  else showToast("Importe um modelo primeiro.");
-});
-$("orbitButton").addEventListener("click", () => {
-  controls.enableRotate = true;
-  controls.enablePan = true;
-  controls.mouseButtons.LEFT = THREE.MOUSE.ROTATE;
-  $("orbitButton").classList.add("active");
-  $("panButton").classList.remove("active");
-  $("cameraMode").textContent = "ORBIT CONTROLS";
-});
-$("panButton").addEventListener("click", () => {
-  controls.enableRotate = false;
-  controls.enablePan = true;
-  controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
-  $("panButton").classList.add("active");
-  $("orbitButton").classList.remove("active");
-  $("cameraMode").textContent = "PAN CONTROLS";
-});
-$("fullscreenButton").addEventListener("click", async () => {
-  try {
-    if (!document.fullscreenElement) await host.requestFullscreen();
-    else await document.exitFullscreen();
-  } catch {
-    showToast("Tela cheia não está disponível neste navegador.");
-  }
-});
-$("helpButton").addEventListener("click", () => $("helpDialog").showModal());
-
-host.addEventListener("dblclick", () => {
-  if (currentModel) frameModel(currentModel);
-});
-
-let dragDepth = 0;
-host.addEventListener("dragenter", (event) => {
-  event.preventDefault();
-  dragDepth++;
-  host.classList.add("dragging");
-});
-host.addEventListener("dragover", (event) => event.preventDefault());
-host.addEventListener("dragleave", (event) => {
-  event.preventDefault();
-  dragDepth = Math.max(0, dragDepth - 1);
-  if (!dragDepth) host.classList.remove("dragging");
-});
-host.addEventListener("drop", (event) => {
-  event.preventDefault();
-  dragDepth = 0;
-  host.classList.remove("dragging");
-  if (event.dataTransfer.files.length) loadModel(event.dataTransfer.files);
-});
-
-function animate() {
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene, camera);
-}
-animate();
-
-window.addEventListener("beforeunload", () => {
-  disposeModel();
-  if (objectUrl) URL.revokeObjectURL(objectUrl);
-  resizeObserver.disconnect();
-});
+document.querySelector("#year").textContent = new Date().getFullYear();
+updateCurrencyLabels();
+loadRate();
