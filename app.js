@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 import { MTLLoader } from "three/addons/loaders/MTLLoader.js";
+import { OBJExporter } from "three/addons/exporters/OBJExporter.js";
 
 const $ = (id) => document.getElementById(id);
 const host = $("canvasHost");
@@ -169,6 +170,71 @@ function disposeModel() {
   currentModel = null;
 }
 
+
+function setEditorEnabled(enabled) {
+  document.querySelectorAll("[data-transform]").forEach((input) => { input.disabled = !enabled; });
+  $("resetTransform").disabled = !enabled;
+  $("exportButton").disabled = !enabled;
+}
+
+function syncTransformInputs() {
+  if (!currentModel) return;
+  document.querySelectorAll("[data-transform]").forEach((input) => {
+    const { transform, axis } = input.dataset;
+    const value = transform === "rotation"
+      ? THREE.MathUtils.radToDeg(currentModel.rotation[axis])
+      : currentModel[transform][axis];
+    input.value = Number(value.toFixed(3));
+  });
+}
+
+function applyTransformInput(input) {
+  if (!currentModel) return;
+  const { transform, axis } = input.dataset;
+  const value = Number(input.value);
+  if (!Number.isFinite(value)) return;
+  if (transform === "scale" && value <= 0) {
+    input.value = currentModel.scale[axis];
+    return;
+  }
+  currentModel[transform][axis] = transform === "rotation"
+    ? THREE.MathUtils.degToRad(value)
+    : value;
+}
+
+function resetTransform() {
+  if (!currentModel) return;
+  currentModel.position.set(0, 0, 0);
+  currentModel.rotation.set(0, 0, 0);
+  currentModel.scale.set(1, 1, 1);
+  syncTransformInputs();
+  frameModel(currentModel);
+}
+
+function exportModel() {
+  if (!currentModel) return;
+  try {
+    const output = new OBJExporter().parse(currentModel);
+    const blob = new Blob([output], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${$("fileName").textContent.replace(/\.obj$/i, "") || "modelo"}-editado.obj`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast("Modelo exportado em OBJ.");
+  } catch (error) {
+    console.error(error);
+    showToast("Não foi possível exportar o modelo.");
+  }
+}
+
+document.querySelectorAll("[data-transform]").forEach((input) => {
+  input.addEventListener("input", () => applyTransformInput(input));
+});
+$("resetTransform").addEventListener("click", resetTransform);
+$("exportButton").addEventListener("click", exportModel);
+
 function getFileMap(files) {
   const map = new Map();
   for (const file of files) {
@@ -243,6 +309,8 @@ async function loadModel(files) {
     $("statusText").textContent = objFile.name;
     $("statusText").previousElementSibling.classList.add("ready");
     emptyState.hidden = true;
+    setEditorEnabled(true);
+    syncTransformInputs();
     showToast("Modelo carregado com sucesso.");
   } catch (error) {
     console.error(error);
