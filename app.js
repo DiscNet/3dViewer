@@ -28,69 +28,79 @@ async function initFlutedGlass() {
       const w = sourceCanvas.width;
       const h = sourceCanvas.height;
 
-      const base = ctx.createLinearGradient(0, 0, w, h);
-      base.addColorStop(0, "#10070b");
-      base.addColorStop(0.48, "#3a0813");
-      base.addColorStop(1, "#16070c");
+      const base = ctx.createRadialGradient(w * 0.58, h * 0.46, 20, w * 0.58, h * 0.46, w * 0.78);
+      base.addColorStop(0, "#6c141c");
+      base.addColorStop(0.42, "#3a0813");
+      base.addColorStop(1, "#080306");
       ctx.fillStyle = base;
       ctx.fillRect(0, 0, w, h);
 
-      const drawGlow = (x, y, radius, color) => {
+      const drawGlow = (x, y, radius, color, coreColor = "rgba(255,255,255,0.92)") => {
         const glow = ctx.createRadialGradient(x, y, 0, x, y, radius);
-        glow.addColorStop(0, color);
+        glow.addColorStop(0, coreColor);
+        glow.addColorStop(0.1, color);
+        glow.addColorStop(0.42, color.replace(/,\s*[\d.]+\)$/, ",0.28)"));
         glow.addColorStop(1, "rgba(58,8,19,0)");
         ctx.fillStyle = glow;
         ctx.fillRect(0, 0, w, h);
       };
 
-      drawGlow(
-        w * (0.72 + Math.sin(t * 0.8) * 0.13),
-        h * (0.28 + Math.cos(t) * 0.12),
-        430,
-        "rgba(255,218,218,0.72)"
-      );
-      drawGlow(
-        w * (0.38 + Math.cos(t * 0.65) * 0.17),
-        h * (0.72 + Math.sin(t * 0.9) * 0.12),
-        390,
-        "rgba(184,49,58,0.82)"
-      );
-      drawGlow(
-        w * (0.86 + Math.sin(t * 0.55) * 0.08),
-        h * (0.78 + Math.cos(t * 0.7) * 0.1),
-        300,
-        "rgba(255,244,240,0.52)"
-      );
-
-      drawGlow(
-        w * (0.58 + Math.cos(t * 0.72) * 0.16),
-        h * (0.48 + Math.sin(t * 0.82) * 0.2),
-        245,
-        "rgba(255,112,124,0.42)"
-      );
-      drawGlow(
-        w * (0.94 + Math.sin(t * 0.48) * 0.04),
-        h * (0.42 + Math.cos(t * 0.62) * 0.16),
-        210,
-        "rgba(255,230,226,0.48)"
-      );
+      const lights = [
+        {
+          x: w * (0.27 + Math.sin(t * 0.72) * 0.13),
+          y: h * (0.43 + Math.cos(t * 0.86) * 0.17),
+          radius: 300,
+          color: "rgba(184,49,58,0.92)",
+          core: "rgba(255,247,245,0.98)"
+        },
+        {
+          x: w * (0.72 + Math.cos(t * 0.58) * 0.12),
+          y: h * (0.57 + Math.sin(t * 0.74) * 0.18),
+          radius: 360,
+          color: "rgba(140,21,27,0.96)",
+          core: "rgba(255,229,226,0.94)"
+        },
+        {
+          x: w * (0.52 + Math.sin(t * 0.46 + 1.8) * 0.2),
+          y: h * (0.22 + Math.cos(t * 0.62 + 1.8) * 0.12),
+          radius: 245,
+          color: "rgba(108,20,28,0.88)",
+          core: "rgba(255,239,236,0.88)"
+        }
+      ];
 
       ctx.save();
       ctx.globalCompositeOperation = "screen";
-      ctx.filter = "blur(42px)";
+      for (const light of lights) {
+        drawGlow(light.x, light.y, light.radius, light.color, light.core);
 
+        const orbit = 42;
+        const satelliteX = light.x + Math.cos(t * 1.1) * orbit;
+        const satelliteY = light.y + Math.sin(t * 1.1) * orbit * 0.6;
+        drawGlow(
+          satelliteX,
+          satelliteY,
+          105,
+          "rgba(184,49,58,0.62)",
+          "rgba(255,255,255,0.96)"
+        );
+      }
+      ctx.restore();
+
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.filter = "blur(54px)";
       for (let i = 0; i < 4; i++) {
-        const phase = t + i * 1.7;
-        const x = w * (0.2 + i * 0.2) + Math.sin(phase * 0.8) * 135;
-        const y = h * (0.5 + Math.cos(phase * 0.65) * 0.28);
-        const radiusX = 190 + Math.sin(phase) * 55;
-        const radiusY = 105 + Math.cos(phase * 0.7) * 35;
-
+        const phase = t * 0.7 + i * 1.7;
+        const x = w * (0.16 + i * 0.22) + Math.sin(phase) * 125;
+        const y = h * (0.52 + Math.cos(phase * 0.8) * 0.28);
+        const radiusX = 205 + Math.sin(phase) * 48;
+        const radiusY = 118 + Math.cos(phase * 0.7) * 30;
         const fluid = ctx.createRadialGradient(x, y, 0, x, y, radiusX);
         fluid.addColorStop(0, i % 2
-          ? "rgba(224,72,88,0.68)"
-          : "rgba(255,224,222,0.62)");
-        fluid.addColorStop(0.5, "rgba(140,21,27,0.34)");
+          ? "rgba(184,49,58,0.54)"
+          : "rgba(255,224,222,0.42)");
+        fluid.addColorStop(0.5, "rgba(140,21,27,0.3)");
         fluid.addColorStop(1, "rgba(58,8,19,0)");
         ctx.fillStyle = fluid;
         ctx.beginPath();
@@ -100,8 +110,8 @@ async function initFlutedGlass() {
       ctx.restore();
 
       const silhouette = ctx.createRadialGradient(w * 0.34, h * 0.5, 20, w * 0.34, h * 0.5, 300);
-      silhouette.addColorStop(0, "rgba(2,1,2,0.92)");
-      silhouette.addColorStop(0.48, "rgba(5,2,4,0.62)");
+      silhouette.addColorStop(0, "rgba(2,1,2,0.78)");
+      silhouette.addColorStop(0.48, "rgba(5,2,4,0.48)");
       silhouette.addColorStop(1, "rgba(5,2,4,0)");
       ctx.fillStyle = silhouette;
       ctx.fillRect(0, 0, w, h);
@@ -114,17 +124,6 @@ async function initFlutedGlass() {
       specular.addColorStop(1, "rgba(255,255,255,0.16)");
       ctx.fillStyle = specular;
       ctx.fillRect(0, 0, w, h);
-
-      ctx.save();
-      ctx.globalCompositeOperation = "screen";
-      ctx.filter = "blur(24px)";
-      const rimGlow = ctx.createRadialGradient(w * 0.82, h * 0.5, 8, w * 0.82, h * 0.5, 250);
-      rimGlow.addColorStop(0, "rgba(255,238,236,0.42)");
-      rimGlow.addColorStop(0.38, "rgba(184,49,58,0.24)");
-      rimGlow.addColorStop(1, "rgba(184,49,58,0)");
-      ctx.fillStyle = rimGlow;
-      ctx.fillRect(0, 0, w, h);
-      ctx.restore();
     };
 
     const createFrameImage = (time, onLoad) => {
