@@ -1406,13 +1406,13 @@ body {
 
 
 /* WebGL fluted glass refraction */
-.hero-visuals {
+.hero-visuals.webgl-ready {
   background: none !important;
 }
-.hero-visuals::before,
-.hero-visuals::after,
-.hero-visuals .gradient-shape,
-.hero-visuals .glass-cube {
+.hero-visuals.webgl-ready::before,
+.hero-visuals.webgl-ready::after,
+.hero-visuals.webgl-ready .gradient-shape,
+.hero-visuals.webgl-ready .glass-cube {
   display: none !important;
 }
 .fluted-glass-canvas {
@@ -1422,4 +1422,7 @@ body {
   width: 100%;
   height: 100%;
   z-index: 0;
+}
+.hero-visuals:not(.webgl-ready) .fluted-glass-canvas {
+  display: none;
 }
