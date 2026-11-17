@@ -2,158 +2,132 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#101014">
-  <meta name="description" content="Visualizador 3D de arquivos OBJ diretamente no navegador.">
-  <title>3D Viewer — DiscNet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8fa">
+  <meta name="description" content="Converta dólar para real com taxas de referência atualizadas. Simples, rápido e gratuito.">
+  <title>Câmbio — Conversor de moedas</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
-      }
-    }
-  </script>
 </head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <a class="brand" href="./" aria-label="3D Viewer início">
-        <span class="brand-mark"><span></span><span></span><span></span></span>
-        <span>3D<span class="brand-muted">VIEWER</span></span>
-      </a>
-      <div class="topbar-center"><span class="status-dot"></span><span id="statusText">Nenhum modelo carregado</span></div>
-      <div class="topbar-actions">
-        <button class="icon-button" id="helpButton" title="Ajuda" aria-label="Ajuda">?</button>
-        <a class="button button-secondary" href="./android.html">Android Lab</a>
-        <button class="button button-primary" id="openButton"><span>＋</span> Abrir modelo</button>
+  <header class="site-header">
+    <a class="brand" href="./" aria-label="Câmbio, página inicial">
+      <span class="brand-symbol" aria-hidden="true"><span></span><span></span></span>
+      <span>câmbio<span class="brand-period">.</span></span>
+    </a>
+    <nav class="main-nav" aria-label="Navegação principal">
+      <a class="nav-link active" href="#conversor">Conversor</a>
+      <a class="nav-link" href="#sobre">Como funciona</a>
+    </nav>
+    <a class="header-link" href="#conversor">Começar agora <span aria-hidden="true">↗</span></a>
+  </header>
+
+  <main>
+    <section class="hero" id="conversor">
+      <div class="hero-copy">
+        <span class="eyebrow"><span class="eyebrow-line"></span> CÂMBIO SEM COMPLICAÇÃO</span>
+        <h1>Seu dinheiro.<br><span>Em outra moeda.</span></h1>
+        <p class="hero-description">Converta dólar em real com clareza e acompanhe a taxa de referência mais recente, sem cadastro e sem complicação.</p>
+        <div class="trust-note"><span class="trust-check">✓</span> Gratuito e direto ao ponto <span class="note-divider"></span> Sem criar conta</div>
       </div>
-    </header>
 
-    <main class="workspace">
-      <aside class="sidebar">
-        <section class="panel-section">
-          <div class="section-heading"><span>MODELO</span><span class="section-index">01</span></div>
-          <div class="file-card" id="fileCard">
-            <div class="file-icon">OBJ</div>
-            <div class="file-details"><strong id="fileName">Nenhum arquivo</strong><small id="fileMeta">Importe um modelo 3D</small></div>
-            <button class="subtle-button" id="replaceButton" title="Substituir modelo" aria-label="Substituir modelo">↗</button>
+      <div class="converter-card" aria-label="Conversor de dólar para real">
+        <div class="card-topline">
+          <div>
+            <span class="card-kicker">CONVERSOR DE MOEDAS</span>
+            <h2>Faça sua conversão</h2>
           </div>
-          <div class="drop-hint">Arraste um arquivo .obj para a viewport</div>
-        </section>
+          <span class="live-indicator"><span></span> TAXA DE REFERÊNCIA</span>
+        </div>
 
-        <section class="panel-section">
-          <div class="section-heading"><span>VISUALIZAÇÃO</span><span class="section-index">02</span></div>
-          <label class="control-label" for="renderMode">Modo de renderização</label>
-          <select id="renderMode" class="select-control">
-            <option value="solid">Sólido</option>
-            <option value="wireframe">Wireframe</option>
-            <option value="solid-wire">Sólido + wireframe</option>
-          </select>
-          <label class="control-label" for="modelColor">Cor do modelo</label>
-          <div class="color-control"><input type="color" id="modelColor" value="#a78bfa"><span id="colorValue">#A78BFA</span><button id="resetColor" class="text-button">Resetar</button></div>
-          <label class="toggle-row"><span>Grade de referência</span><input type="checkbox" id="gridToggle" checked><span class="toggle"></span></label>
-          <label class="toggle-row"><span>Eixos XYZ</span><input type="checkbox" id="axesToggle"><span class="toggle"></span></label>
-          <label class="toggle-row"><span>Rotação automática</span><input type="checkbox" id="autoRotate"><span class="toggle"></span></label>
-        </section>
-
-        <section class="panel-section editor-section">
-          <div class="section-heading"><span>EDIÇÃO DO MODELO</span><span class="section-index">03</span></div>
-          <div class="transform-group">
-            <div class="transform-heading">POSIÇÃO <small>UNIDADES</small></div>
-            <div class="axis-inputs">
-              <label>X<input type="number" step="0.1" data-transform="position" data-axis="x" value="0" disabled></label>
-              <label>Y<input type="number" step="0.1" data-transform="position" data-axis="y" value="0" disabled></label>
-              <label>Z<input type="number" step="0.1" data-transform="position" data-axis="z" value="0" disabled></label>
+        <div class="currency-field">
+          <label for="amount">Você envia</label>
+          <div class="amount-row">
+            <input id="amount" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" value="100" aria-label="Valor em dólar">
+            <div class="currency-select" aria-label="Moeda de origem">
+              <span class="flag flag-us" aria-hidden="true">US</span>
+              <span class="currency-code" id="baseCode">USD</span>
+              <span class="currency-name">Dólar americano</span>
             </div>
-          </div>
-          <div class="transform-group">
-            <div class="transform-heading">ROTAÇÃO <small>GRAUS</small></div>
-            <div class="axis-inputs">
-              <label>X<input type="number" step="1" data-transform="rotation" data-axis="x" value="0" disabled></label>
-              <label>Y<input type="number" step="1" data-transform="rotation" data-axis="y" value="0" disabled></label>
-              <label>Z<input type="number" step="1" data-transform="rotation" data-axis="z" value="0" disabled></label>
-            </div>
-          </div>
-          <div class="transform-group">
-            <div class="transform-heading">ESCALA <small>FATOR</small></div>
-            <div class="axis-inputs">
-              <label>X<input type="number" min="0.001" step="0.1" data-transform="scale" data-axis="x" value="1" disabled></label>
-              <label>Y<input type="number" min="0.001" step="0.1" data-transform="scale" data-axis="y" value="1" disabled></label>
-              <label>Z<input type="number" min="0.001" step="0.1" data-transform="scale" data-axis="z" value="1" disabled></label>
-            </div>
-          </div>
-          <div class="editor-actions">
-            <button class="editor-button" id="resetTransform" disabled>Redefinir</button>
-            <button class="editor-button editor-export" id="exportButton" disabled>Exportar OBJ</button>
-          </div>
-          <p class="editor-note">As alterações são aplicadas ao modelo e incluídas na exportação.</p>
-        </section>
-
-        <section class="panel-section">
-          <div class="section-heading"><span>ILUMINAÇÃO</span><span class="section-index">04</span></div>
-          <label class="range-label" for="lightIntensity"><span>Luz ambiente</span><output id="lightValue">1.2</output></label>
-          <input class="range-control" type="range" id="lightIntensity" min="0" max="3" step="0.1" value="1.2">
-          <label class="range-label" for="directionalIntensity"><span>Luz direcional</span><output id="directionalValue">2.0</output></label>
-          <input class="range-control" type="range" id="directionalIntensity" min="0" max="5" step="0.1" value="2">
-        </section>
-
-        <section class="panel-section stats-section">
-          <div class="section-heading"><span>ESTATÍSTICAS</span><span class="section-index">05</span></div>
-          <div class="stat-grid">
-            <div class="stat-card"><small>VÉRTICES</small><strong id="vertexCount">—</strong></div>
-            <div class="stat-card"><small>FACES</small><strong id="faceCount">—</strong></div>
-            <div class="stat-card"><small>MALHAS</small><strong id="meshCount">—</strong></div>
-            <div class="stat-card"><small>DIMENSÕES</small><strong id="dimensions">—</strong></div>
-          </div>
-        </section>
-        <footer class="sidebar-footer"><span>DISCNET</span><span>3D VIEWER <b>v1.0</b></span></footer>
-      </aside>
-
-      <section class="viewport" id="viewport">
-        <div class="viewport-toolbar">
-          <div class="view-label"><span class="live-dot"></span> VIEWPORT <span class="separator">/</span> PERSPECTIVA</div>
-          <div class="viewport-tools">
-            <button class="tool-button active" id="orbitButton" title="Rotacionar">Orbit</button>
-            <button class="tool-button" id="panButton" title="Mover câmera">Pan</button>
-            <button class="tool-button" id="frameButton" title="Enquadrar modelo">Enquadrar <span>⌖</span></button>
-            <button class="tool-button square-tool" id="fullscreenButton" title="Tela cheia" aria-label="Tela cheia">⛶</button>
           </div>
         </div>
-        <div id="canvasHost" class="canvas-host">
-          <div class="empty-state" id="emptyState">
-            <div class="empty-graphic">
-              <div class="cube cube-back"></div><div class="cube cube-front"></div>
-              <span class="graphic-cross cross-one">＋</span><span class="graphic-cross cross-two">＋</span>
-            </div>
-            <h1>Seu espaço <span>tridimensional.</span></h1>
-            <p>Importe um modelo OBJ para começar a explorar.</p>
-            <button class="button button-primary empty-button" id="emptyOpenButton">＋ Selecionar arquivo OBJ</button>
-            <span class="file-support">SUPORTA .OBJ · .MTL · TEXTURAS</span>
-          </div>
-          <div class="axis-label axis-x">X</div><div class="axis-label axis-y">Y</div><div class="axis-label axis-z">Z</div>
-          <div class="viewport-bottom"><span id="cameraMode">ORBIT CONTROLS</span><span>SCROLL PARA ZOOM <i>·</i> ARRASTE PARA ROTACIONAR</span></div>
-          <div class="drop-overlay" id="dropOverlay"><div>Solte o arquivo para importar</div><small>OBJ, MTL ou arquivos de textura</small></div>
-        </div>
-      </section>
-    </main>
-  </div>
 
-  <input type="file" id="fileInput" accept=".obj,.mtl,image/*" multiple hidden>
-  <div class="toast" id="toast" role="status"></div>
-  <dialog id="helpDialog" class="help-dialog">
-    <form method="dialog"><button class="dialog-close" aria-label="Fechar">×</button></form>
-    <span class="dialog-kicker">GUIA RÁPIDO</span><h2>Como navegar</h2>
-    <div class="help-row"><kbd>Arrastar</kbd><span>Rotacionar a câmera</span></div>
-    <div class="help-row"><kbd>Shift + arrastar</kbd><span>Mover a câmera</span></div>
-    <div class="help-row"><kbd>Scroll</kbd><span>Zoom</span></div>
-    <div class="help-row"><kbd>Duplo clique</kbd><span>Enquadrar o modelo</span></div>
-    <p>Para carregar materiais, selecione o arquivo OBJ junto com o MTL e as texturas correspondentes.</p>
-  </dialog>
-  <script type="module" src="./app.js"></script>
+        <div class="swap-row">
+          <span class="field-caption">PAR DE MOEDAS</span>
+          <button class="swap-button" id="swapButton" type="button" aria-label="Inverter moedas" title="Inverter moedas">
+            <span aria-hidden="true">⇅</span>
+          </button>
+        </div>
+
+        <div class="currency-field result-field">
+          <label>Você recebe aproximadamente</label>
+          <div class="amount-row">
+            <output id="result" class="result-amount" aria-live="polite">—</output>
+            <div class="currency-select">
+              <span class="flag flag-br" id="quoteFlag" aria-hidden="true">BR</span>
+              <span class="currency-code" id="quoteCode">BRL</span>
+              <span class="currency-name" id="quoteName">Real brasileiro</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rate-summary">
+          <div class="rate-line"><span id="rateText">Buscando cotação...</span><span class="rate-date" id="rateDate"></span></div>
+          <div class="rate-status" id="rateStatus"><span class="status-dot"></span> Consultando fonte de referência</div>
+        </div>
+
+        <button class="refresh-button" id="refreshButton" type="button">
+          <span class="refresh-icon" aria-hidden="true">↻</span> Atualizar cotação
+        </button>
+        <p class="disclaimer">A cotação é uma referência de mercado e pode diferir dos valores praticados por bancos e casas de câmbio.</p>
+      </div>
+      <div class="hero-decoration decoration-one"></div>
+      <div class="hero-decoration decoration-two"></div>
+    </section>
+
+    <section class="quick-section" aria-label="Valores rápidos">
+      <div class="quick-intro"><span class="eyebrow">SIMULE EM SEGUNDOS</span><p>Escolha um valor para começar</p></div>
+      <div class="quick-values">
+        <button type="button" class="quick-value" data-amount="50">US$ 50</button>
+        <button type="button" class="quick-value" data-amount="100">US$ 100</button>
+        <button type="button" class="quick-value" data-amount="500">US$ 500</button>
+        <button type="button" class="quick-value" data-amount="1000">US$ 1.000</button>
+      </div>
+    </section>
+
+    <section class="info-section" id="sobre">
+      <div class="info-heading">
+        <span class="eyebrow"><span class="eyebrow-line"></span> TRANSPARÊNCIA EM CADA ETAPA</span>
+        <h2>Uma conversão simples.<br><span>Uma informação confiável.</span></h2>
+      </div>
+      <div class="info-grid">
+        <article class="info-item">
+          <span class="info-number">01</span>
+          <h3>Taxa de referência</h3>
+          <p>Consultamos uma fonte pública de taxas de câmbio para calcular o valor equivalente entre as moedas.</p>
+        </article>
+        <article class="info-item">
+          <span class="info-number">02</span>
+          <h3>Sem cadastro</h3>
+          <p>Abra a página, informe o valor e veja o resultado. Não é necessário criar uma conta.</p>
+        </article>
+        <article class="info-item">
+          <span class="info-number">03</span>
+          <h3>Resultado claro</h3>
+          <p>Mostramos a taxa utilizada e a data de referência para você entender de onde vem o cálculo.</p>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand footer-brand" href="./"><span class="brand-symbol" aria-hidden="true"><span></span><span></span></span><span>câmbio<span class="brand-period">.</span></span></a>
+    <span>Informação cambial de forma simples.</span>
+    <span class="footer-copy">© <span id="year"></span> Câmbio</span>
+  </footer>
+
+  <script src="./app.js" defer></script>
 </body>
 </html>
