@@ -1,6 +1,6 @@
 import React from "https://esm.sh/react@18.3.1";
 import { createRoot } from "https://esm.sh/react-dom@18.3.1/client?external=react";
-import { Emulator } from "https://esm.sh/android-emulator-webrtc?external=react,react-dom";
+import { Emulator } from "https://esm.sh/android-emulator-webrtc@2.0.1?external=react,react-dom";
 
 const $ = (id) => document.getElementById(id);
 const root = createRoot($("emulatorRoot"));
