@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101014">
+  <meta name="description" content="Visualizador 3D de arquivos OBJ diretamente no navegador.">
+  <title>3D Viewer — DiscNet</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="3D Viewer início">
+        <span class="brand-mark"><span></span><span></span><span></span></span>
+        <span>3D<span class="brand-muted">VIEWER</span></span>
+      </a>
+      <div class="topbar-center"><span class="status-dot"></span><span id="statusText">Nenhum modelo carregado</span></div>
+      <div class="topbar-actions">
+        <button class="icon-button" id="helpButton" title="Ajuda" aria-label="Ajuda">?</button>
+        <button class="button button-primary" id="openButton"><span>＋</span> Abrir modelo</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="sidebar">
+        <section class="panel-section">
+          <div class="section-heading"><span>MODELO</span><span class="section-index">01</span></div>
+          <div class="file-card" id="fileCard">
+            <div class="file-icon">OBJ</div>
+            <div class="file-details"><strong id="fileName">Nenhum arquivo</strong><small id="fileMeta">Importe um modelo 3D</small></div>
+            <button class="subtle-button" id="replaceButton" title="Substituir modelo" aria-label="Substituir modelo">↗</button>
+          </div>
+          <div class="drop-hint">Arraste um arquivo .obj para a viewport</div>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-heading"><span>VISUALIZAÇÃO</span><span class="section-index">02</span></div>
+          <label class="control-label" for="renderMode">Modo de renderização</label>
+          <select id="renderMode" class="select-control">
+            <option value="solid">Sólido</option>
+            <option value="wireframe">Wireframe</option>
+            <option value="solid-wire">Sólido + wireframe</option>
+          </select>
+          <label class="control-label" for="modelColor">Cor do modelo</label>
+          <div class="color-control"><input type="color" id="modelColor" value="#a78bfa"><span id="colorValue">#A78BFA</span><button id="resetColor" class="text-button">Resetar</button></div>
+          <label class="toggle-row"><span>Grade de referência</span><input type="checkbox" id="gridToggle" checked><span class="toggle"></span></label>
+          <label class="toggle-row"><span>Eixos XYZ</span><input type="checkbox" id="axesToggle"><span class="toggle"></span></label>
+          <label class="toggle-row"><span>Rotação automática</span><input type="checkbox" id="autoRotate"><span class="toggle"></span></label>
+        </section>
+
+        <section class="panel-section">
+          <div class="section-heading"><span>ILUMINAÇÃO</span><span class="section-index">03</span></div>
+          <label class="range-label" for="lightIntensity"><span>Luz ambiente</span><output id="lightValue">1.2</output></label>
+          <input class="range-control" type="range" id="lightIntensity" min="0" max="3" step="0.1" value="1.2">
+          <label class="range-label" for="directionalIntensity"><span>Luz direcional</span><output id="directionalValue">2.0</output></label>
+          <input class="range-control" type="range" id="directionalIntensity" min="0" max="5" step="0.1" value="2">
+        </section>
+
+        <section class="panel-section stats-section">
+          <div class="section-heading"><span>ESTATÍSTICAS</span><span class="section-index">04</span></div>
+          <div class="stat-grid">
+            <div class="stat-card"><small>VÉRTICES</small><strong id="vertexCount">—</strong></div>
+            <div class="stat-card"><small>FACES</small><strong id="faceCount">—</strong></div>
+            <div class="stat-card"><small>MALHAS</small><strong id="meshCount">—</strong></div>
+            <div class="stat-card"><small>DIMENSÕES</small><strong id="dimensions">—</strong></div>
+          </div>
+        </section>
+        <footer class="sidebar-footer"><span>DISCNET</span><span>3D VIEWER <b>v1.0</b></span></footer>
+      </aside>
+
+      <section class="viewport" id="viewport">
+        <div class="viewport-toolbar">
+          <div class="view-label"><span class="live-dot"></span> VIEWPORT <span class="separator">/</span> PERSPECTIVA</div>
+          <div class="viewport-tools">
+            <button class="tool-button active" id="orbitButton" title="Rotacionar">Orbit</button>
+            <button class="tool-button" id="panButton" title="Mover câmera">Pan</button>
+            <button class="tool-button" id="frameButton" title="Enquadrar modelo">Enquadrar <span>⌖</span></button>
+            <button class="tool-button square-tool" id="fullscreenButton" title="Tela cheia" aria-label="Tela cheia">⛶</button>
+          </div>
+        </div>
+        <div id="canvasHost" class="canvas-host">
+          <div class="empty-state" id="emptyState">
+            <div class="empty-graphic">
+              <div class="cube cube-back"></div><div class="cube cube-front"></div>
+              <span class="graphic-cross cross-one">＋</span><span class="graphic-cross cross-two">＋</span>
+            </div>
+            <h1>Seu espaço <span>tridimensional.</span></h1>
+            <p>Importe um modelo OBJ para começar a explorar.</p>
+            <button class="button button-primary empty-button" id="emptyOpenButton">＋ Selecionar arquivo OBJ</button>
+            <span class="file-support">SUPORTA .OBJ · .MTL · TEXTURAS</span>
+          </div>
+          <div class="axis-label axis-x">X</div><div class="axis-label axis-y">Y</div><div class="axis-label axis-z">Z</div>
+          <div class="viewport-bottom"><span id="cameraMode">ORBIT CONTROLS</span><span>SCROLL PARA ZOOM <i>·</i> ARRASTE PARA ROTACIONAR</span></div>
+          <div class="drop-overlay" id="dropOverlay"><div>Solte o arquivo para importar</div><small>OBJ, MTL ou arquivos de textura</small></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <input type="file" id="fileInput" accept=".obj,.mtl,image/*" multiple hidden>
+  <div class="toast" id="toast" role="status"></div>
+  <dialog id="helpDialog" class="help-dialog">
+    <form method="dialog"><button class="dialog-close" aria-label="Fechar">×</button></form>
+    <span class="dialog-kicker">GUIA RÁPIDO</span><h2>Como navegar</h2>
+    <div class="help-row"><kbd>Arrastar</kbd><span>Rotacionar a câmera</span></div>
+    <div class="help-row"><kbd>Shift + arrastar</kbd><span>Mover a câmera</span></div>
+    <div class="help-row"><kbd>Scroll</kbd><span>Zoom</span></div>
+    <div class="help-row"><kbd>Duplo clique</kbd><span>Enquadrar o modelo</span></div>
+    <p>Para carregar materiais, selecione o arquivo OBJ junto com o MTL e as texturas correspondentes.</p>
+  </dialog>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
