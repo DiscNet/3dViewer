@@ -1557,3 +1557,135 @@ body {
       inset 0 1px 0 rgba(255,255,255,.2);
   }
 }
+
+
+/* Luminous glass treatment for the converter panel */
+.converter-card {
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(184,49,58,.22), transparent 54%),
+    linear-gradient(145deg, rgba(58,8,19,.76), rgba(18,5,9,.82));
+  border: 1px solid rgba(255,245,245,.42);
+  box-shadow:
+    0 0 0 1px rgba(184,49,58,.12),
+    0 0 28px rgba(184,49,58,.2),
+    0 24px 70px rgba(0,0,0,.42),
+    inset 0 1px 0 rgba(255,255,255,.32),
+    inset 0 -1px 0 rgba(255,255,255,.08);
+  backdrop-filter: blur(24px) saturate(145%);
+  -webkit-backdrop-filter: blur(24px) saturate(145%);
+}
+
+.converter-card > .converter-glow-layer {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+  filter: contrast(1.35) saturate(1.25);
+}
+
+.converter-glow-layer::before,
+.converter-glow-layer::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  opacity: .62;
+  mix-blend-mode: screen;
+}
+
+.converter-glow-layer::before {
+  background: radial-gradient(circle,
+    rgba(255,255,255,.95) 0 3%,
+    rgba(255,226,226,.72) 8%,
+    rgba(184,49,58,.62) 24%,
+    rgba(140,21,27,.24) 48%,
+    transparent 72%);
+  box-shadow:
+    0 0 35px 12px rgba(255,245,245,.28),
+    0 0 90px 35px rgba(184,49,58,.3),
+    0 0 150px 65px rgba(140,21,27,.2);
+  animation: converter-luminaire-spin 16s linear infinite;
+}
+
+.converter-glow-layer::after {
+  width: 100%;
+  height: 100%;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(255,255,255,.32), transparent 20%),
+    radial-gradient(circle at 82% 72%, rgba(184,49,58,.36), transparent 32%),
+    radial-gradient(ellipse at 50% 0%, rgba(255,235,235,.16), transparent 58%);
+  animation: converter-glow-pulse 7s ease-in-out infinite alternate;
+}
+
+.converter-card > *:not(.converter-glow-layer) {
+  position: relative;
+  z-index: 1;
+}
+
+.converter-card .currency-field {
+  background: rgba(20,5,10,.32);
+  border-color: rgba(255,255,255,.25);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.09);
+}
+
+.converter-card .result-field {
+  background: rgba(108,20,28,.3);
+  border-color: rgba(255,190,190,.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    0 0 22px rgba(184,49,58,.12);
+}
+
+.converter-card .refresh-button {
+  border: 1px solid rgba(255,255,255,.38);
+  box-shadow:
+    0 0 18px rgba(184,49,58,.24),
+    inset 0 1px 0 rgba(255,255,255,.3);
+}
+
+.converter-card .refresh-button:hover {
+  box-shadow:
+    0 0 26px rgba(184,49,58,.42),
+    inset 0 1px 0 rgba(255,255,255,.36);
+}
+
+@keyframes converter-luminaire-spin {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes converter-glow-pulse {
+  from { opacity: .38; transform: scale(.96); }
+  to { opacity: .82; transform: scale(1.08); }
+}
+
+@media (max-width: 720px) {
+  .converter-card {
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(184,49,58,.2), transparent 56%),
+      rgba(28,7,12,.84);
+    box-shadow:
+      0 0 22px rgba(184,49,58,.18),
+      0 18px 48px rgba(0,0,0,.4),
+      inset 0 1px 0 rgba(255,255,255,.24);
+  }
+
+  .converter-glow-layer::before {
+    width: 145px;
+    height: 145px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .converter-glow-layer::before,
+  .converter-glow-layer::after {
+    animation: none;
+  }
+}
