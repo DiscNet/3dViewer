@@ -1426,3 +1426,26 @@ body {
 .hero-visuals:not(.webgl-ready) .fluted-glass-canvas {
   display: none;
 }
+
+
+/* Paper Design Fluted Glass */
+.hero-visuals.paper-glass-ready {
+  background: transparent !important;
+}
+.hero-visuals.paper-glass-ready::before,
+.hero-visuals.paper-glass-ready::after,
+.hero-visuals.paper-glass-ready .gradient-shape,
+.hero-visuals.paper-glass-ready .glass-cube {
+  display: none !important;
+}
+.paper-glass-mount {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+.paper-glass-mount > canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
