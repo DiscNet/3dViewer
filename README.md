@@ -1,53 +1,32 @@
-# 3D Viewer
+# Câmbio
 
-Visualizador de modelos 3D no navegador, desenvolvido com HTML, CSS, JavaScript e [Three.js](https://threejs.org/).
+Conversor de moedas com foco inicial em dólar americano (USD) e real brasileiro (BRL). Interface responsiva, sem cadastro e com cotação de referência consultada diretamente no navegador.
 
 ## Recursos
 
-- Importação local de arquivos `.obj`.
-- Carregamento de materiais `.mtl` e texturas selecionadas junto ao modelo.
-- Controles de órbita, pan, zoom e enquadramento automático.
-- Modos sólido, wireframe e sólido com wireframe.
-- Cor do modelo personalizável.
-- Grade, eixos e rotação automática.
-- Ajuste de iluminação ambiente e direcional.
-- Estatísticas de vértices, faces, malhas e dimensões.
-- Interface responsiva e modo de tela cheia.
-- Processamento local: os modelos não são enviados para um servidor.
+- Conversão de USD para BRL e de BRL para USD.
+- Atualização manual da cotação.
+- Valores rápidos para simulação.
+- Exibição da taxa e da data de referência.
+- Formatação monetária brasileira.
+- Layout responsivo e animações sutis.
+- Respeita a preferência do sistema por movimento reduzido.
 
-## Executar
+## Cotação
 
-Como o projeto utiliza módulos ES e importações do Three.js, execute-o por um servidor HTTP local. Não abra o arquivo `index.html` diretamente com `file://`.
+As taxas são consultadas na API pública [Frankfurter](https://frankfurter.dev/), sem chave de API.
 
-Com Python:
+Endpoint utilizado:
 
-```bash
-python -m http.server 8000
+```
+https://api.frankfurter.dev/v2/rate/usd/brl
 ```
 
-Acesse [http://localhost:8000](http://localhost:8000).
+As taxas são referências publicadas pelas fontes de dados e não cotações de negociação em tempo real. Bancos, cartões e casas de câmbio podem aplicar spreads, tarifas e valores diferentes.
 
-Também é possível usar a extensão Live Server do Visual Studio Code.
+## Publicação
 
-## Importar modelos com materiais
-
-Selecione o arquivo `.obj`, o respectivo `.mtl` e as imagens de textura utilizadas pelo material na mesma operação. O visualizador associa os arquivos pelo nome.
-
-## Controles
-
-| Ação | Controle |
-|---|---|
-| Rotacionar | Arrastar com o botão esquerdo |
-| Mover câmera | Shift + arrastar ou modo Pan |
-| Zoom | Scroll |
-| Enquadrar | Botão Enquadrar ou duplo clique |
-
-## Tecnologias
-
-- HTML5 e CSS3
-- JavaScript ES Modules
-- Three.js 0.180.0
-- OBJLoader, MTLLoader e OrbitControls
+O projeto é estático e pode ser publicado pelo GitHub Pages. Não requer servidor próprio.
 
 ## Estrutura
 
@@ -59,6 +38,9 @@ Selecione o arquivo `.obj`, o respectivo `.mtl` e as imagens de textura utilizad
 └── README.md
 ```
 
-## Licença
+## Tecnologias
 
-Defina a licença do projeto antes de distribuir ou reutilizar o código.
+- HTML5
+- CSS3
+- JavaScript
+- Frankfurter Exchange Rates API
