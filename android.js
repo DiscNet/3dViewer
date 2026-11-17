@@ -4,7 +4,7 @@ import { Emulator } from "https://esm.sh/android-emulator-webrtc?external=react,
 
 const $ = (id) => document.getElementById(id);
 const root = createRoot($("emulatorRoot"));
-let emulatorRef = null;
+const emulatorRef = React.createRef();
 let connected = false;
 let selectedApk = null;
 let toastTimer;
@@ -35,6 +35,7 @@ function renderEmulator() {
   const gateway = normalizeUrl($("gatewayUrl").value);
   root.render(React.createElement(Emulator, {
     key: gateway,
+    ref: emulatorRef,
     uri: gateway,
     muted: false,
     volume: 1,
