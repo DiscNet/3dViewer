@@ -3,12 +3,18 @@ async function initFlutedGlass() {
   const visuals = mountElement?.parentElement;
   if (!mountElement || !visuals) return;
 
+  visuals.classList.remove("paper-glass-ready", "paper-glass-error");
+
   try {
     const {
       ShaderMount,
       flutedGlassFragmentShader,
       getShaderColorFromString
     } = await import("https://esm.sh/@paper-design/shaders@0.0.82?bundle");
+
+    if (!("WebGL2RenderingContext" in window)) {
+      throw new Error("Este navegador não oferece suporte a WebGL2.");
+    }
 
     const sourceCanvas = document.createElement("canvas");
     sourceCanvas.width = 1600;
@@ -89,23 +95,32 @@ async function initFlutedGlass() {
           mountElement,
           flutedGlassFragmentShader,
           uniforms,
-          { alpha: false, antialias: false, powerPreference: "high-performance" },
+          { alpha: false, antialias: true, powerPreference: "high-performance" },
           0,
           0,
-          1.25,
+          1.5,
           3200000,
           ["u_image"]
         );
 
+        const canvas = mountElement.querySelector("canvas");
+        if (!canvas) throw new Error("Paper Design não criou o canvas WebGL.");
+
         visuals.classList.add("paper-glass-ready");
       } catch (error) {
-        console.error("Paper Fluted Glass:", error);
+        visuals.classList.add("paper-glass-error");
+        console.error("Falha ao inicializar Paper Design Fluted Glass:", error);
       }
     };
-    image.onerror = () => console.error("Não foi possível preparar a textura do vidro.");
+
+    image.onerror = () => {
+      visuals.classList.add("paper-glass-error");
+      console.error("Não foi possível carregar a textura do Fluted Glass.");
+    };
     image.src = sourceCanvas.toDataURL("image/png");
   } catch (error) {
-    console.error("Paper Fluted Glass:", error);
+    visuals.classList.add("paper-glass-error");
+    console.error("Paper Design Fluted Glass indisponível:", error);
   }
 }
 
