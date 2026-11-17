@@ -17,68 +17,122 @@ async function initFlutedGlass() {
     }
 
     const sourceCanvas = document.createElement("canvas");
-    sourceCanvas.width = 1600;
-    sourceCanvas.height = 1000;
+    sourceCanvas.width = 1000;
+    sourceCanvas.height = 625;
 
     const ctx = sourceCanvas.getContext("2d");
     if (!ctx) throw new Error("Canvas 2D indisponível.");
 
-    const background = ctx.createLinearGradient(0, 0, 1600, 1000);
-    background.addColorStop(0, "#100b0c");
-    background.addColorStop(0.48, "#302326");
-    background.addColorStop(1, "#10090b");
-    ctx.fillStyle = background;
-    ctx.fillRect(0, 0, 1600, 1000);
+    const drawFluidBackground = (time) => {
+      const t = time * 0.00016;
+      const w = sourceCanvas.width;
+      const h = sourceCanvas.height;
 
-    const ambientLight = ctx.createRadialGradient(1280, 230, 0, 1280, 230, 760);
-    ambientLight.addColorStop(0, "rgba(255,240,235,.62)");
-    ambientLight.addColorStop(.28, "rgba(184,49,58,.22)");
-    ambientLight.addColorStop(1, "rgba(58,8,19,0)");
-    ctx.fillStyle = ambientLight;
-    ctx.fillRect(0, 0, 1600, 1000);
+      const base = ctx.createLinearGradient(0, 0, w, h);
+      base.addColorStop(0, "#10070b");
+      base.addColorStop(0.48, "#3a0813");
+      base.addColorStop(1, "#16070c");
+      ctx.fillStyle = base;
+      ctx.fillRect(0, 0, w, h);
 
-    ctx.save();
-    ctx.filter = "blur(42px)";
-    ctx.fillStyle = "#030203";
-    ctx.beginPath();
-    ctx.ellipse(570, 520, 155, 390, -.08, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(600, 220, 145, 165, .06, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+      const drawGlow = (x, y, radius, color) => {
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, radius);
+        glow.addColorStop(0, color);
+        glow.addColorStop(1, "rgba(58,8,19,0)");
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, w, h);
+      };
 
-    const sideLight = ctx.createLinearGradient(760, 0, 1600, 0);
-    sideLight.addColorStop(0, "rgba(255,255,255,0)");
-    sideLight.addColorStop(.65, "rgba(255,235,232,.08)");
-    sideLight.addColorStop(1, "rgba(255,245,240,.2)");
-    ctx.fillStyle = sideLight;
-    ctx.fillRect(0, 0, 1600, 1000);
+      drawGlow(
+        w * (0.72 + Math.sin(t * 0.8) * 0.13),
+        h * (0.28 + Math.cos(t) * 0.12),
+        430,
+        "rgba(255,218,218,0.48)"
+      );
+      drawGlow(
+        w * (0.38 + Math.cos(t * 0.65) * 0.17),
+        h * (0.72 + Math.sin(t * 0.9) * 0.12),
+        390,
+        "rgba(184,49,58,0.58)"
+      );
+      drawGlow(
+        w * (0.86 + Math.sin(t * 0.55) * 0.08),
+        h * (0.78 + Math.cos(t * 0.7) * 0.1),
+        300,
+        "rgba(255,244,240,0.3)"
+      );
 
-    const image = new Image();
-    image.onload = () => {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.filter = "blur(58px)";
+
+      for (let i = 0; i < 4; i++) {
+        const phase = t + i * 1.7;
+        const x = w * (0.2 + i * 0.2) + Math.sin(phase * 0.8) * 135;
+        const y = h * (0.5 + Math.cos(phase * 0.65) * 0.28);
+        const radiusX = 190 + Math.sin(phase) * 55;
+        const radiusY = 105 + Math.cos(phase * 0.7) * 35;
+
+        const fluid = ctx.createRadialGradient(x, y, 0, x, y, radiusX);
+        fluid.addColorStop(0, i % 2
+          ? "rgba(210,75,86,0.46)"
+          : "rgba(255,224,222,0.38)");
+        fluid.addColorStop(0.5, "rgba(140,21,27,0.22)");
+        fluid.addColorStop(1, "rgba(58,8,19,0)");
+        ctx.fillStyle = fluid;
+        ctx.beginPath();
+        ctx.ellipse(x, y, radiusX, radiusY, Math.sin(phase) * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      const silhouette = ctx.createRadialGradient(w * 0.34, h * 0.5, 20, w * 0.34, h * 0.5, 300);
+      silhouette.addColorStop(0, "rgba(2,1,2,0.92)");
+      silhouette.addColorStop(0.48, "rgba(5,2,4,0.62)");
+      silhouette.addColorStop(1, "rgba(5,2,4,0)");
+      ctx.fillStyle = silhouette;
+      ctx.fillRect(0, 0, w, h);
+
+      const specular = ctx.createLinearGradient(w * 0.55, 0, w, 0);
+      specular.addColorStop(0, "rgba(255,255,255,0)");
+      specular.addColorStop(0.62, "rgba(255,238,236,0.08)");
+      specular.addColorStop(0.86, "rgba(255,248,246,0.28)");
+      specular.addColorStop(1, "rgba(255,255,255,0.08)");
+      ctx.fillStyle = specular;
+      ctx.fillRect(0, 0, w, h);
+    };
+
+    const createFrameImage = (time, onLoad) => {
+      drawFluidBackground(time);
+      const frameImage = new Image();
+      frameImage.onload = () => onLoad(frameImage);
+      frameImage.onerror = () => console.error("Falha ao atualizar a textura fluida do vidro.");
+      frameImage.src = sourceCanvas.toDataURL("image/jpeg", 0.88);
+    };
+
+    createFrameImage(performance.now(), (initialImage) => {
       try {
         const uniforms = {
-          u_image: image,
+          u_image: initialImage,
           u_colorBack: getShaderColorFromString("#00000000"),
           u_colorShadow: getShaderColorFromString("#16070b"),
-          u_colorHighlight: getShaderColorFromString("#fff4f0"),
-          u_shadows: 0.42,
+          u_colorHighlight: getShaderColorFromString("#fffaf8"),
+          u_shadows: 0.48,
           u_size: 0.72,
           u_angle: 0,
-          u_distortion: 0.72,
+          u_distortion: 0.78,
           u_shift: 0,
-          u_blur: 0.06,
-          u_edges: 0.3,
+          u_blur: 0.035,
+          u_edges: 0.38,
           u_stretch: 0.08,
           u_distortionShape: 1,
-          u_highlights: 0.24,
+          u_highlights: 0.52,
           u_shape: 1,
           u_marginLeft: 0,
           u_marginRight: 0,
           u_marginTop: 0,
           u_marginBottom: 0,
-          u_grainMixer: 0.015,
+          u_grainMixer: 0.012,
           u_grainOverlay: 0.025,
           u_fit: 2,
           u_scale: 1,
@@ -91,7 +145,7 @@ async function initFlutedGlass() {
           u_worldHeight: 0
         };
 
-        new ShaderMount(
+        const shaderMount = new ShaderMount(
           mountElement,
           flutedGlassFragmentShader,
           uniforms,
@@ -103,21 +157,32 @@ async function initFlutedGlass() {
           ["u_image"]
         );
 
-        const canvas = mountElement.querySelector("canvas");
-        if (!canvas) throw new Error("Paper Design não criou o canvas WebGL.");
+        if (!mountElement.querySelector("canvas")) {
+          throw new Error("Paper Design não criou o canvas WebGL.");
+        }
 
         visuals.classList.add("paper-glass-ready");
+
+        let lastFrame = 0;
+        let framePending = false;
+        const animateFluid = (time) => {
+          requestAnimationFrame(animateFluid);
+          if (document.hidden || framePending || time - lastFrame < 120) return;
+
+          lastFrame = time;
+          framePending = true;
+          createFrameImage(time, (nextImage) => {
+            shaderMount.setUniforms({ u_image: nextImage });
+            framePending = false;
+          });
+        };
+
+        requestAnimationFrame(animateFluid);
       } catch (error) {
         visuals.classList.add("paper-glass-error");
         console.error("Falha ao inicializar Paper Design Fluted Glass:", error);
       }
-    };
-
-    image.onerror = () => {
-      visuals.classList.add("paper-glass-error");
-      console.error("Não foi possível carregar a textura do Fluted Glass.");
-    };
-    image.src = sourceCanvas.toDataURL("image/png");
+    });
   } catch (error) {
     visuals.classList.add("paper-glass-error");
     console.error("Paper Design Fluted Glass indisponível:", error);
